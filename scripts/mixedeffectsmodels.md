@@ -2,6 +2,7 @@
 
 from Christoph Scherber (https://www.youtube.com/watch?v=VhMWPkTbXoY) 
 
+<<<<<<< HEAD
 ##Load packages  
 
 ```r
@@ -9,6 +10,12 @@ library(nlme)
 ```
 
 ##Load data  
+=======
+##Load packages
+
+
+##Load data
+>>>>>>> cae2539d3fe2575b7b6f8fd3e5da1a1718750b99
 
 ```r
 data(Oats)
@@ -248,7 +255,11 @@ summary(model2)
   581.2372 600.9441 -281.6186
 ```
 
+<<<<<<< HEAD
 **confirms structure of model**  
+=======
+**confirms structure of model **  
+>>>>>>> cae2539d3fe2575b7b6f8fd3e5da1a1718750b99
 
 ```
 Number of Observations: 72 = lowest level of replication
