@@ -1,0 +1,131 @@
+---
+title: "Mixed Effects Models"
+output:  
+#  html_notebook: default
+  html_document:
+    keep_md: true
+---
+
+from Christoph Scherber (https://www.youtube.com/watch?v=VhMWPkTbXoY) 
+
+##Load packages  
+```{r, message=FALSE, warning=FALSE}
+library(nlme)
+```
+
+##Load data  
+```{r}
+data(Oats)
+str(Oats)
+head(Oats)
+plot(Oats)
+```
+
+###Model - assume you don't know anything about data structure
+```{r}
+model1 <- lm(yield ~ Variety * nitro, data = Oats)
+summary(model1)
+```
+
+Intercept is yield of 81.9 bushels per hectare for variety `GoldenRain` at a nitrogen concentration of 0.  `GoldenRain` is first because its first in alphabet.  `Marvellous ` has 8.517 bushels per hectare more than `GoldenRain` at 0 nitrogen.
+
+`nitro` effect is a positive slope (75.333).  `Marvellous:nitro` slope is 75.333 - 10.750, `Victory:nitro` slope is 75.333 + 5.750.  
+
+**quite complex to interpret**
+
+###Model with mixed effects: 
+```{r}
+#just fixed effects
+lme(yield ~ Variety * nitro, data = Oats)
+
+#now add random effects
+lme(yield ~ Variety * nitro, data = Oats, 
+              random = ~1 | Block/Variety/nitro)
+
+#but model is now saturated with random effects, i.e. there are as many combinations of random effects (72) as there are data points (72) in the model.  So remove the lowest level random effect
+
+model2 <- lme(yield ~ Variety * nitro, data = Oats, 
+              random = ~1 | Block/Variety)
+model2
+summary(model2)
+```
+
+**model performance**
+
+``` 
+  Data: Oats 
+       AIC      BIC    logLik
+  581.2372 600.9441 -281.6186
+```
+
+**confirms structure of model**  
+
+```
+Number of Observations: 72 = lowest level of replication
+Number of Groups: 
+             Block Variety %in% Block 
+                 6                 18 
+           
+**variation attributable to the random effects**
+
+Random effects:
+ Formula: ~1 | Block
+        (Intercept)
+StdDev:    14.64485
+
+ Formula: ~1 | Variety %in% Block
+        (Intercept) Residual
+StdDev:    10.39931 12.99039
+```
+
+There was quite a bit of variation between blocks, variety and residual variance in nitrogen.  
+
+**Estimate of fixed effects in the model**  
+
+```
+Fixed effects: yield ~ Variety * nitro 
+                            Value Std.Error DF   t-value p-value
+(Intercept)              81.90000  8.570709 51  9.555802  0.0000
+VarietyMarvellous         8.51667  8.684675 10  0.980655  0.3499
+VarietyVictory           -8.60000  8.684675 10 -0.990250  0.3454
+nitro                    75.33333 11.858549 51  6.352660  0.0000
+VarietyMarvellous:nitro -10.75000 16.770521 51 -0.641006  0.5244
+VarietyVictory:nitro      5.75000 16.770521 51  0.342864  0.7331
+ Correlation: 
+                        (Intr) VrtyMr VrtyVc nitro  VrtyM:
+VarietyMarvellous       -0.507                            
+VarietyVictory          -0.507  0.500                     
+nitro                   -0.415  0.410  0.410              
+VarietyMarvellous:nitro  0.294 -0.579 -0.290 -0.707       
+VarietyVictory:nitro     0.294 -0.290 -0.579 -0.707  0.500
+```
+
+The estimates (`Value`) are identical to model1 (standard linear model).  The errors are completely different.  
+
+###Compare the coefficients in model 1 and 2
+```{r}
+#model1 coefficients
+coef(model1)
+#model2 coefficients
+coef(model2)
+```
+
+Model 1 only has an intercept for each variety  - accross all blocks.  Model 2 has a separate intercept for each block and variety combination.  
+
+###Plot random effects of the model
+
+```{r}
+plot(ranef(model2))
+```
+
+should show symmetrical distribution of random effects around 0.  There should be no particular pattern.  Also size of effect is important: if they are large then you really need them in the model. 
+
+### Plot residuals in the model to check for heteroskedasticity
+
+```{r}
+plot(model2)
+```
+
+symmetrical scatter of residuals around 0 with no pattern.  
+
+
