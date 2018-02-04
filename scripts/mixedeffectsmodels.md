@@ -2,7 +2,6 @@
 
 from Christoph Scherber (https://www.youtube.com/watch?v=VhMWPkTbXoY) 
 
-<<<<<<< HEAD
 ##Load packages  
 
 ```r
@@ -10,12 +9,8 @@ library(nlme)
 ```
 
 ##Load data  
-=======
-##Load packages
 
 
-##Load data
->>>>>>> cae2539d3fe2575b7b6f8fd3e5da1a1718750b99
 
 ```r
 data(Oats)
@@ -59,7 +54,7 @@ head(Oats)
 plot(Oats)
 ```
 
-![](mixedeffectsmodels_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+![](mixedeffectsmodels_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ###Model - assume you don't know anything about data structure
 
@@ -255,11 +250,7 @@ summary(model2)
   581.2372 600.9441 -281.6186
 ```
 
-<<<<<<< HEAD
 **confirms structure of model**  
-=======
-**confirms structure of model **  
->>>>>>> cae2539d3fe2575b7b6f8fd3e5da1a1718750b99
 
 ```
 Number of Observations: 72 = lowest level of replication
@@ -372,7 +363,7 @@ Model 1 only has an intercept for each variety  - accross all blocks.  Model 2 h
 plot(ranef(model2))
 ```
 
-![](mixedeffectsmodels_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](mixedeffectsmodels_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 should show symmetrical distribution of random effects around 0.  There should be no particular pattern.  Also size of effect is important: if they are large then you really need them in the model. 
 
@@ -383,7 +374,7 @@ should show symmetrical distribution of random effects around 0.  There should b
 plot(model2)
 ```
 
-![](mixedeffectsmodels_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](mixedeffectsmodels_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 symmetrical scatter of residuals around 0 with no pattern.  
 
