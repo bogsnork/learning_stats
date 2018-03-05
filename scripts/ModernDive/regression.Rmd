@@ -1,0 +1,374 @@
+---
+title: "Moderndive: Regression"
+output: html_notebook
+---
+
+http://moderndive.com/6-regression.html
+
+## Packages
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+library(gapminder)
+```
+
+## Data
+```{r}
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+evals <- evals %>%
+  select(score, bty_avg, age)
+evals
+```
+
+**score**: Numerical variable of the average teaching score based on students’ evaluations between 1 and 5. This is the outcome variable `y` of interest.
+
+**bty_avg**: Numerical variable of average “beauty” rating based on a panel of 6 students’ scores between 1 and 10. This is the numerical explanatory variable `x` of interest.
+
+**age**: A numerical variable of age.
+
+```{r}
+glimpse(evals)
+```
+
+# 6.1 One numerical explanatory variable
+
+## Summary statistics
+
+### Univariate
+```{r}
+evals %>% 
+  select(score, bty_avg) %>% 
+  summary()
+```
+
+### bivariate
+```{r}
+cor(evals$score, evals$bty_avg)
+```
+correlation is weakly positive
+
+### Graph
+```{r}
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_jitter() +  
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Fig 6.3: Relationship of teaching and beauty scores")
+```
+
+Looking at Figure 6.3, it is not immediately apparent that these two variables are positively related. This is to be expected given the positive, but rather weak (close to 0), correlation coefficient of 0.187.
+
+#### add regression
+
+```{r}
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +  
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+## Simple Linear Regression
+
+```{r}
+score_model <- lm(score ~ bty_avg, data = evals)
+formula(score_model)
+get_regression_table(score_model, digits = 2)
+```
+
+### 6.1.4 Residual analysis
+```{r}
+regression_points <- get_regression_points(score_model)
+regression_points
+```
+
+
+
+```{r}
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
+```
+
+This histogram has a slight left-skew in that there is a long tail on the left. Another way to say this is this data exhibits a negative skew. Is this a problem? Again, there is a certain amount of subjectivity in the response. In the authors’ opinion, while there is a slight skew/pattern to the residuals isn’t a large concern. 
+
+```{r}
+ggplot(regression_points, aes(x = bty_avg, y = residual)) +
+  geom_point() +
+  geom_abline(intercept = c(0,0), slope = 0, colour = "red")
+```
+
+
+##### Learning check 6.3
+(LC6.3) Continuing with our regression using `age` as the explanatory variable and `teaching score` as the outcome variable, use the get_regression_points() function to get the observed values, fitted values, and residuals for all 463 instructors. Perform a residual analysis and look for any systematic patterns in the residuals. Ideally, there should be little to no pattern.
+
+```{r}
+ggplot(evals, aes(x = age, y = score)) +
+  geom_jitter() +  
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Age", y = "Teaching Score", title = "Fig 6.3: Relationship of teaching and age")
+```
+
+```{r}
+score_model <- lm(score ~ age, data = evals)
+get_regression_table(score_model, digits = 2)
+```
+
+
+### 6.1.4 Residual analysis
+```{r}
+regression_points <- get_regression_points(score_model)
+
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
+```
+
+
+```{r}
+ggplot(regression_points, aes(x = age, y = residual)) +
+  geom_point() +
+  geom_hline(yintercept = 0, col = "blue")
+```
+
+# 6.2 One categorical explanatory variable
+
+## 6.2.1 Exploratory data analysis
+
+```{r}
+library(gapminder)
+gapminder2007 <- gapminder %>%
+  filter(year == 2007) %>% 
+  select(country, continent, lifeExp, gdpPercap)
+
+glimpse(gapminder2007)
+```
+
+```{r}
+summary(gapminder2007$continent)
+```
+
+
+```{r}
+lifeExp_worldwide <- gapminder2007 %>%
+  summarize(median = median(lifeExp), mean = mean(lifeExp))
+lifeExp_worldwide
+```
+
+### graph
+```{r}
+ggplot(gapminder2007, aes(x = lifeExp)) +
+  geom_histogram(binwidth = 5, color = "white") +
+  labs(x = "Life expectancy", y = "Number of countries", title = "Life expectancy by continent") +
+  facet_wrap(~continent, nrow = 2)
+```
+
+```{r}
+ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
+  geom_boxplot() +
+  labs(x = "Continent", y = "Life expectancy (years)", title = "Life expectancy by continent") 
+```
+
+### 6.2.2 Linear regression
+```{r}
+lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
+get_regression_table(lifeExp_model)
+```
+
+### 6.2.4 Residual analysis
+
+```{r}
+regression_points <- get_regression_points(lifeExp_model)
+```
+
+```{r}
+ggplot(regression_points, aes(x = continent, y = residual)) +
+  geom_jitter(width = 0.1) + 
+  labs(x = "Continent", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue")
+```
+
+We observe:
+
+There seems to be a rough balance of both positive and negative residuals for all 5 continents.
+However, there is one clear outlier in Asia. It has the smallest residual, hence also has the smallest life expectancy in Asia.
+Let’s investigate the 5 countries in Asia with the shortest life expectancy:
+
+```{r}
+gapminder2007 %>%
+  filter(continent == "Asia") %>%
+  arrange(lifeExp)
+```
+
+```{r}
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 5, color = "white") +
+  labs(x = "Residual")
+```
+
+
+
+# 7 Multiple Regression
+
+
+### Packages
+```{r}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+library(ISLR)
+```
+
+## 7.1 Two numerical explanatory variables
+
+
+### Data
+```{r}
+library(ISLR)
+Credit <- Credit %>%
+  select(Balance, Limit, Income, Rating, Age)
+Credit
+```
+
+
+
+```{r}
+glimpse(Credit)
+```
+
+
+```{r}
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  summary()
+```
+
+
+```{r}
+cor(Credit$Balance, Credit$Limit)
+cor(Credit$Balance, Credit$Income)
+```
+
+```{r}
+Credit %>%
+  select(Balance, Limit, Income) %>% 
+  cor()
+```
+
+Balance with Limit is 0.862. This indicates a strong positive linear relationship, which makes sense as only individuals with large credit limits can accrue large credit card balances.
+
+Balance with Income is 0.464. This is suggestive of another positive linear relationship, although not as strong as the relationship between Balance and Limit.
+
+As an added bonus, we can read off the correlation coefficient of the two explanatory variables, Limit and Income of 0.792. In this case, we say there is a high degree of collinearity between these two explanatory variables.
+
+```{r}
+ggplot(Credit, aes(x = Limit, y = Balance)) +
+  geom_point() +
+  labs(x = "Credit limit (in $)", y = "Credit card balance (in $)", 
+       title = "Relationship between balance and credit limit") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+ggplot(Credit, aes(x = Income, y = Balance)) +
+  geom_point() +
+  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
+       title = "Relationship between balance and income") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+### 7.1.2 Multiple regression
+
+```{r}
+Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
+get_regression_table(Balance_model)
+```
+
+However, recall in Figure 7.1 that when considered separately, both Limit and Income had positive relationships with the outcome variable Balance: as card holders’ credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for Income is now -7.66, suggesting a negative relationship between income and credit card balance. What explains these contradictory results?
+
+This is known as **Simpson’s Paradox**, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined. We expand on this in Subsection 7.3.2 where we’ll look at the relationship between credit Limit and credit card balance but split by different income bracket groups.
+
+### 7.1.3 Observed/fitted values and residuals
+
+```{r}
+regression_points <- get_regression_points(Balance_model)
+regression_points
+```
+
+### 7.1.4 Residual analysis
+
+```{r}
+ggplot(regression_points, aes(x = Limit, y = residual)) +
+  geom_point() +
+  labs(x = "Credit limit (in $)", y = "Residual", title = "Residuals vs credit limit")
+```
+
+```{r}
+ggplot(regression_points, aes(x = Income, y = residual)) +
+  geom_point() +
+  labs(x = "Income (in $1000)", y = "Residual", title = "Residuals vs income")
+```
+
+In this case, there does appear to be a systematic pattern to the residuals. As the scatter of the residuals around the line `y=0` is definitely not consistent. This behavior of the residuals is further evidenced by the histogram of residuals in Figure 7.3. We observe that the residuals have a slight right-skew (recall we say that data is right-skewed, or positively-skewed, if there is a tail to the right). Ideally, these residuals should be bell-shaped around a residual value of 0.
+
+```{r}
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(color = "white") +
+  labs(x = "Residual")
+```
+
+Another way to interpret this histogram is that since the residual is computed as  
+y
+−
+ˆ
+y
+  = balance - balance_hat, we have some values where the fitted value  
+ˆ
+y
+  is very much lower than the observed value  
+y
+ . In other words, we are underestimating certain credit card holders’ balances by a very large amount.
+
+
+## 7.2 One numerical & one categorical explanatory variable
+
+
+```{r}
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+evals <- evals %>%
+  select(score, age, gender)
+evals
+```
+
+```{r}
+summary(evals)
+```
+
+```{r}
+ggplot(evals, aes(x = age, y = score, col = gender)) +
+  geom_jitter() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+There are almost no women faculty over the age of 60.
+
+Fitting separate regression lines for men and women, we see they have different slopes. We see that the associated effect of increasing age seems to be much harsher for women than men. In other words, as women age, the drop in their teaching score appears to be more faster.
+
+
+###7.2.2 Multiple regression
+
+```{r}
+score_model_2 <- lm(score ~ age + gender, data = evals)
+get_regression_table(score_model_2)
+```
+
+
+
+
+
+
+
+
+
+
